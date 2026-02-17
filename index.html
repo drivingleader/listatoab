@@ -2,765 +2,438 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Patente 2026 - Focus Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Patente Z - 2026 Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.6.0/confetti.browser.min.js"></script>
+    <!-- Icone -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
     <style>
+        /* --- CONFIGURAZIONE VISIVA --- */
         :root {
-            --neon-green: #ccff00;
-            --neon-purple: #d946ef;
-            --neon-blue: #00f0ff;
-            --dark-bg: #09090b;
-            --card-bg: #18181b;
+            --bg-body: #050505;
+            --bg-card: #121214;
+            --accent-purple: #8b5cf6;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
             --text-main: #ffffff;
-            --correct: #22c55e;
-            --wrong: #ef4444;
+            --text-dim: #a1a1aa;
         }
 
         body {
-            font-family: 'Space Grotesk', sans-serif;
-            background-color: var(--dark-bg);
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
             color: var(--text-main);
-            overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
-            /* Cool subtle grid background */
-            background-image: radial-gradient(#27272a 1px, transparent 1px);
-            background-size: 20px 20px;
+            height: 100dvh; /* Altezza dinamica per mobile */
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        /* --- UTILITÀ --- */
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .glass-panel {
-            background: rgba(9, 9, 11, 0.8);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .gradient-text {
-            background: linear-gradient(135deg, #ccff00 0%, #00f0ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        /* Effetto Vetro */
+        .glass {
+            background: rgba(30, 30, 35, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* 3D Button Effect */
-        .btn-3d {
-            transition: all 0.1s;
-            transform: translateY(0);
-            box-shadow: 0 4px 0 rgba(255,255,255,0.2);
-        }
-        .btn-3d:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 rgba(255,255,255,0.2);
-        }
-        .btn-3d:disabled {
-            opacity: 0.5;
-            transform: translateY(4px);
-            box-shadow: none;
-            cursor: not-allowed;
-        }
-
-        /* Highlighting Logic */
-        .keyword-highlight {
-            color: var(--neon-purple);
-            font-weight: 700;
-            text-shadow: 0 0 10px rgba(217, 70, 239, 0.3);
-        }
-
-        /* Animations */
-        @keyframes popIn {
-            0% { transform: scale(0.9); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
-            100% { transform: translateY(0px); }
+        /* --- ANIMAZIONI --- */
+        @keyframes slideUp { 
+            0% { transform: translateY(20px); opacity: 0; } 
+            100% { transform: translateY(0); opacity: 1; } 
         }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
-        @keyframes confettiFall {
-            0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-        }
-
-        .anim-pop { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .anim-enter { animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
         .anim-shake { animation: shake 0.3s ease-in-out; }
-        
-        /* Selection Styles */
-        .option-card {
-            background: #27272a;
-            border: 2px solid transparent;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+        /* --- BOTTONI GAMEPLAY --- */
+        .btn-game {
+            transition: all 0.1s;
+            position: relative;
+            overflow: hidden;
         }
-        .option-card.selected {
-            background: rgba(204, 255, 0, 0.15);
-            border-color: var(--neon-green);
-            transform: scale(1.02);
+        .btn-game:active {
+            transform: scale(0.95);
+            filter: brightness(1.2);
         }
-        .option-card.correct-reveal {
-            background: rgba(34, 197, 94, 0.15);
-            border-color: var(--correct);
+        /* Overlay per effetto tocco */
+        .btn-game::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: white;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
-        .option-card.wrong-reveal {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: var(--wrong);
-            opacity: 0.8;
-        }
-        .option-card.missed-reveal {
-            border-color: var(--correct);
-            border-style: dashed;
-            opacity: 0.6;
+        .btn-game:active::after {
+            opacity: 0.1;
         }
 
-        /* Combo Flame */
-        .combo-flame {
-            text-shadow: 0 0 10px #ff9100;
-            animation: float 2s infinite ease-in-out;
-        }
-
-        /* Confetti Particle */
-        .confetti {
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            top: -10px;
-            z-index: 9999;
-            animation: confettiFall 3s linear forwards;
+        /* --- SEGNALI STRADALI SVG --- */
+        .sign-svg {
+            width: 100px;
+            height: 100px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+            margin: 0 auto;
         }
     </style>
 </head>
-<body class="h-screen flex flex-col text-sm md:text-base">
+<body class="flex flex-col w-full max-w-md mx-auto shadow-2xl bg-black">
 
-    <!-- Header -->
-    <header class="px-5 py-4 flex justify-between items-center glass-panel sticky top-0 z-50">
-        <div class="flex items-center gap-4">
-            <button id="back-btn" onclick="confirmExit()" class="hidden w-10 h-10 flex items-center justify-center rounded-full bg-zinc-800 active:scale-90 transition-transform">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-            </button>
-            <div class="leading-none">
-                <div class="font-bold text-xl tracking-tighter">DRIVE<span class="text-[var(--neon-green)]">GEN-Z</span></div>
-                <div class="text-[10px] text-zinc-500 font-bold tracking-widest uppercase">Smart Trainer</div>
-            </div>
+    <!-- HEADER FISSO -->
+    <header class="h-16 flex items-center justify-between px-5 bg-black/80 backdrop-blur-md border-b border-white/5 z-20">
+        <div>
+            <h1 class="text-xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">
+                PATENTE Z
+            </h1>
+            <p id="mode-badge" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Training Mode</p>
         </div>
-        
-        <!-- Stats Pill -->
-        <div id="stats-pill" class="hidden flex items-center gap-3">
-            <div id="combo-display" class="hidden text-orange-400 font-bold italic text-lg combo-flame">
-                x<span id="combo-count">0</span> 🔥
-            </div>
-            <div class="bg-zinc-800 px-4 py-2 rounded-full border border-zinc-700 font-mono font-bold text-[var(--neon-green)] shadow-lg">
-                <span id="current-score">0</span> XP
-            </div>
+        <div class="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
+            <span class="text-green-400 text-sm">🔥</span>
+            <span id="streak-counter" class="text-sm font-bold font-mono">0</span>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-grow relative overflow-hidden flex flex-col w-full max-w-lg mx-auto">
+    <!-- AREA CENTRALE (SCORREVOLE/DINAMICA) -->
+    <main class="flex-1 relative overflow-hidden flex flex-col">
         
-        <!-- VIEW: Home -->
-        <div id="home-view" class="flex flex-col h-full p-5 anim-pop">
-            <div class="mb-6 mt-2">
-                <h1 class="text-4xl font-bold leading-[0.9] mb-3">Allena il <br><span class="gradient-text">Focus Visivo.</span></h1>
-                <p class="text-zinc-400 text-sm leading-relaxed">Il sistema evidenzia le parole chiave per insegnare al tuo occhio a scansionare i quiz come un pro.</p>
-            </div>
-
-            <div class="flex justify-between items-end mb-2 px-1">
-                <span class="text-xs font-bold text-zinc-500 uppercase tracking-widest">Scegli Argomenti</span>
-                <span id="selected-indicator" class="text-xs text-[var(--neon-green)] font-bold opacity-0 transition-opacity">SELEZIONATI: <span id="sel-count-num">0</span></span>
-            </div>
-
-            <div id="topics-list" class="flex-grow overflow-y-auto space-y-3 pb-28 pr-1">
-                <!-- JS injected -->
-            </div>
-
-            <!-- Bottom Floating Action -->
-            <div class="absolute bottom-6 left-0 w-full px-5 z-40">
-                <button id="start-btn" onclick="startQuiz()" disabled class="w-full bg-[var(--neon-green)] text-black font-bold text-lg py-4 rounded-2xl btn-3d disabled:bg-zinc-800 disabled:text-zinc-600 shadow-[0_10px_40px_-10px_rgba(204,255,0,0.3)]">
-                    AVVIA SESSIONE 🚀
-                </button>
-            </div>
-        </div>
-
-        <!-- VIEW: Quiz -->
-        <div id="quiz-view" class="hidden flex flex-col h-full p-4 pb-6 relative">
+        <!-- SCHERMATA GIOCO -->
+        <div id="screen-game" class="absolute inset-0 flex flex-col px-4 pb-4 pt-2 z-10 transition-transform duration-300">
             
-            <!-- Progress Line -->
-            <div class="w-full bg-zinc-800 h-1.5 rounded-full mb-6 overflow-hidden">
-                <div id="progress-bar" class="h-full bg-gradient-to-r from-[var(--neon-green)] to-[var(--neon-blue)] w-0 transition-all duration-500 ease-out"></div>
+            <!-- Barra Progresso -->
+            <div class="h-1 w-full bg-gray-800 rounded-full mb-4 overflow-hidden">
+                <div id="progress-fill" class="h-full bg-purple-500 w-0 transition-all duration-300"></div>
             </div>
 
-            <div class="flex-grow overflow-y-auto flex flex-col pb-24 scroll-smooth">
+            <!-- Card Principale -->
+            <div id="card-wrapper" class="flex-1 glass rounded-3xl p-5 flex flex-col items-center justify-center text-center relative overflow-hidden shadow-2xl">
                 
-                <!-- Focus Context (Root) - Low visual weight -->
-                <div class="w-full text-center mb-4 opacity-50 transition-opacity hover:opacity-100">
-                    <p class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">CONTESTO</p>
-                    <h2 id="q-root" class="text-sm font-medium text-zinc-300">...</h2>
+                <!-- Feedback Visivo (Vero/Falso sovrapposto) -->
+                <div id="feedback-layer" class="absolute inset-0 z-50 hidden flex-col items-center justify-center bg-black/90 transition-opacity duration-200">
+                    <i id="fb-icon" class="text-6xl mb-4"></i>
+                    <span id="fb-text" class="text-2xl font-black tracking-widest uppercase"></span>
                 </div>
 
-                <!-- Image Area (Insta Style) -->
-                <div id="q-image-box" class="w-full mb-6 hidden">
-                    <div class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl flex items-center justify-center group">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
-                        <img id="q-image" src="" class="h-full w-auto object-contain transition-transform duration-500 group-hover:scale-110 z-0">
-                        <div class="absolute bottom-3 left-4 z-20 text-xs font-bold text-white bg-black/50 backdrop-blur px-2 py-1 rounded">
-                            👁️ FOCUS VISIVO
+                <!-- Contenuto Card -->
+                <div class="w-full h-full flex flex-col">
+                    <!-- Parte Alta: Immagine + Radice -->
+                    <div class="flex-none min-h-[100px] flex flex-col items-center justify-center border-b border-white/5 pb-4 mb-4">
+                        <div id="sign-container" class="mb-3 hidden">
+                            <!-- SVG iniettato qui -->
                         </div>
+                        <p id="txt-root" class="text-gray-400 text-sm font-medium uppercase tracking-wide leading-snug">
+                            Caricamento...
+                        </p>
+                    </div>
+
+                    <!-- Parte Centrale: Completamento -->
+                    <div class="flex-1 flex items-center justify-center">
+                        <p id="txt-comp" class="text-2xl md:text-3xl font-bold text-white leading-tight">
+                            --
+                        </p>
                     </div>
                 </div>
-
-                <!-- Interaction Header -->
-                <div class="flex justify-between items-center mb-3 px-1">
-                    <span class="text-lg font-bold text-white">Cosa è <span class="text-[var(--correct)]">VERO</span>?</span>
-                    <span class="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-1 rounded border border-zinc-700">TOCCA LE RISPOSTE</span>
-                </div>
-                
-                <!-- Options Container -->
-                <div id="options-container" class="space-y-3">
-                    <!-- Cards injected here -->
-                </div>
             </div>
 
-            <!-- Action Area -->
-            <div class="absolute bottom-0 left-0 w-full p-5 bg-gradient-to-t from-[var(--dark-bg)] via-[var(--dark-bg)] to-transparent pt-10">
-                <button id="confirm-btn" onclick="checkAnswers()" class="w-full bg-white text-black font-bold text-lg py-4 rounded-2xl btn-3d shadow-xl">
-                    CONFERMA
+            <!-- Controlli -->
+            <div class="h-24 grid grid-cols-2 gap-4 mt-4">
+                <button id="btn-false" class="btn-game rounded-2xl bg-[#1f1212] border border-red-500/30 text-red-500 flex flex-col items-center justify-center gap-1 shadow-lg shadow-red-900/10">
+                    <i class="ph-bold ph-x text-3xl"></i>
+                    <span class="font-bold tracking-wider">FALSO</span>
                 </button>
-                
-                <button id="next-btn" onclick="nextCard()" class="hidden w-full bg-zinc-800 text-white border border-zinc-700 font-bold text-lg py-4 rounded-2xl btn-3d flex justify-center items-center gap-2">
-                    PROSSIMO LIVELLO ➜
+                <button id="btn-true" class="btn-game rounded-2xl bg-[#0f1f15] border border-green-500/30 text-green-500 flex flex-col items-center justify-center gap-1 shadow-lg shadow-green-900/10">
+                    <i class="ph-bold ph-check text-3xl"></i>
+                    <span class="font-bold tracking-wider">VERO</span>
                 </button>
+            </div>
+            
+            <div id="topic-label" class="text-center mt-2 text-[10px] text-gray-600 font-mono truncate">
+                ...
             </div>
         </div>
 
-        <!-- VIEW: Results -->
-        <div id="results-view" class="hidden h-full flex flex-col items-center justify-center p-6 text-center z-50 bg-[var(--dark-bg)]">
-            <div class="mb-6 relative">
-                <div class="absolute inset-0 bg-[var(--neon-green)] blur-[60px] opacity-20 rounded-full"></div>
-                <svg class="w-48 h-48 relative z-10" viewBox="0 0 100 100">
-                    <circle class="text-zinc-800 stroke-current" stroke-width="8" cx="50" cy="50" r="42" fill="none"></circle>
-                    <circle id="score-ring" class="text-[var(--neon-green)] stroke-current transition-all duration-[1.5s] ease-out" stroke-width="8" stroke-linecap="round" cx="50" cy="50" r="42" fill="none" stroke-dasharray="264" stroke-dashoffset="264" transform="rotate(-90 50 50)"></circle>
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center z-20">
-                    <span id="final-score-val" class="text-5xl font-black tracking-tighter text-white">0%</span>
-                </div>
+        <!-- SCHERMATA MENU (SELEZIONE) -->
+        <div id="screen-menu" class="absolute inset-0 bg-black z-20 transform translate-y-full transition-transform duration-300 flex flex-col px-5 pt-6">
+            <h2 class="text-2xl font-bold text-white mb-2">Scegli Argomento</h2>
+            <p class="text-gray-500 text-sm mb-6">Seleziona cosa vuoi ripassare oggi.</p>
+            
+            <div id="list-container" class="flex-1 overflow-y-auto hide-scroll space-y-3 pb-24">
+                <!-- Lista generata via JS -->
             </div>
 
-            <h2 id="result-title" class="text-4xl font-black mb-3 text-white italic tracking-tight">TITLE</h2>
-            <p id="result-msg" class="text-zinc-400 mb-10 max-w-xs mx-auto text-sm leading-relaxed">...</p>
-
-            <button onclick="goHome()" class="w-full bg-[var(--neon-green)] text-black font-bold py-4 rounded-2xl btn-3d text-lg">
-                TORNA ALLA HOME
-            </button>
+            <div class="absolute bottom-0 left-0 w-full p-5 bg-gradient-to-t from-black via-black to-transparent">
+                <button id="btn-start-custom" class="w-full py-4 bg-white text-black font-bold rounded-xl text-lg shadow-xl active:scale-95 transition-transform">
+                    Inizia Sessione
+                </button>
+            </div>
         </div>
 
     </main>
 
-    <!-- Modal Exit -->
-    <div id="exit-modal" class="fixed inset-0 z-[100] bg-black/80 hidden flex items-center justify-center p-6 backdrop-blur-md opacity-0 transition-opacity duration-300">
-        <div class="bg-zinc-900 p-6 rounded-3xl border border-zinc-700 w-full max-w-xs text-center transform scale-95 transition-transform duration-300" id="modal-box">
-            <div class="text-4xl mb-2">⏸️</div>
-            <h3 class="text-xl font-bold mb-2 text-white">Pausa?</h3>
-            <p class="text-zinc-400 mb-6 text-sm">Se esci ora perderai la tua Combo!</p>
-            <div class="flex gap-3">
-                <button onclick="closeModal()" class="flex-1 py-3 rounded-xl bg-zinc-800 text-white font-bold active:bg-zinc-700">Resta</button>
-                <button onclick="goHome()" class="flex-1 py-3 rounded-xl bg-red-500/20 text-red-500 border border-red-500/50 font-bold active:bg-red-500/30">Esci</button>
-            </div>
-        </div>
-    </div>
+    <!-- NAVIGAZIONE -->
+    <nav class="h-20 bg-black border-t border-white/5 flex items-start justify-around pt-4 z-30 pb-safe">
+        <button onclick="app.goMix()" class="nav-btn flex flex-col items-center gap-1 text-purple-500 w-16 opacity-100 transition-opacity">
+            <i class="ph-fill ph-shuffle text-2xl"></i>
+            <span class="text-[10px] font-bold">Mix</span>
+        </button>
+        <button onclick="app.toggleMenu()" class="nav-btn flex flex-col items-center gap-1 text-gray-500 w-16 opacity-70 transition-opacity">
+            <i class="ph-fill ph-student text-2xl"></i>
+            <span class="text-[10px] font-bold">Studio</span>
+        </button>
+    </nav>
 
-    <!-- Confetti Container -->
-    <div id="confetti-container" class="fixed inset-0 pointer-events-none z-[200] overflow-hidden"></div>
-
+    <!-- LOGICA APP -->
     <script>
-        // --- SMART FOCUS LOGIC ---
-        // Words to highlight to train the eye
-        const focusKeywords = [
-            "solo", "soli", "esclusivamente", "mai", "sempre", "tutti", "tutte", 
-            "non", "ovvero", "tranne", "eccetto", "obbligo", "vietato", "consente", 
-            "apposito", "specifico", "improvvisamente", "immediatamente"
-        ];
-
-        function processTextForFocus(text) {
-            let processed = text;
-            focusKeywords.forEach(word => {
-                // Regex handles whole word match, case insensitive
-                const regex = new RegExp(`\\b${word}\\b`, 'gi');
-                processed = processed.replace(regex, (match) => `<span class="keyword-highlight">${match}</span>`);
-            });
-            return processed;
-        }
-
-        // --- DATASET ---
-        const rawDatabase = [
+        // --- 1. IL DATABASE (DATI PURI, NIENTE PARSING) ---
+        // Ho inserito qui i dati del tuo file, puliti e strutturati.
+        const DB = [
             {
-                id: "strada",
-                title: "La Strada & Definizioni",
-                icon: "🛣️",
-                questions: [
-                    { root: "La strada è...", suffix: "riservata alla circolazione dei soli autoveicoli e motocicli", correct: false },
-                    { root: "La strada è...", suffix: "aperta alla circolazione dei pedoni, degli animali e dei veicoli", correct: true },
-                    { root: "La strada è...", suffix: "qualsiasi area asfaltata, limitata lateralmente dagli attraversamenti pedonali", correct: false },
-                    { root: "La strada può...", suffix: "comprendere le piste ciclabili", correct: true },
-                    { root: "La strada può...", suffix: "essere suddivisa in carreggiate", correct: true },
-                    { root: "La carreggiata è...", suffix: "la parte della strada destinata normalmente alla circolazione dei veicoli", correct: true },
-                    { root: "La carreggiata è...", suffix: "destinata alla sosta di emergenza", correct: false },
-                    { root: "Fanno parte della carreggiata...", suffix: "le corsie di marcia", correct: true },
-                    { root: "Fanno parte della carreggiata...", suffix: "i marciapiedi", correct: false }
+                id: "L1", title: "Definizioni Stradali",
+                items: [
+                    { root: "La strada è...", text: "...aperta alla circolazione dei pedoni, degli animali e dei veicoli", isTrue: true, topic: "La Strada" },
+                    { root: "La strada è...", text: "...riservata alla circolazione dei soli autoveicoli e motocicli", isTrue: false, topic: "La Strada" },
+                    { root: "La strada può...", text: "...essere a senso unico di circolazione", isTrue: true, topic: "La Strada" },
+                    { root: "La carreggiata è...", text: "...la parte della strada destinata normalmente alla circolazione dei veicoli", isTrue: true, topic: "Carreggiata" },
+                    { root: "La carreggiata è...", text: "...destinata alla sosta degli autocarri", isTrue: false, topic: "Carreggiata" },
+                    { root: "Fanno parte della carreggiata...", text: "...gli attraversamenti pedonali", isTrue: true, topic: "Carreggiata" },
+                    { root: "La carreggiata non comprende...", text: "...i marciapiedi", isTrue: true, topic: "Carreggiata" },
+                    { root: "La corsia può...", text: "...essere destinata ad effettuare sorpassi", isTrue: true, topic: "Corsia" },
+                    { root: "La corsia può...", text: "...essere a doppio senso di circolazione", isTrue: false, topic: "Corsia" },
+                    { root: "L'intersezione a raso...", text: "...è un'intersezione di due o più strade poste allo stesso livello", isTrue: true, topic: "Incroci" },
+                    { root: "Il marciapiede è...", text: "...riservato ai pedoni", isTrue: true, topic: "Marciapiedi" }
                 ]
             },
             {
-                id: "corsie",
-                title: "Corsie & Incroci",
-                icon: "🔀",
-                questions: [
-                    { root: "La corsia è...", suffix: "una parte della carreggiata che consente la circolazione di una sola fila di veicoli", correct: true },
-                    { root: "La corsia può...", suffix: "essere a doppio senso di circolazione", correct: false },
-                    { root: "La corsia di accelerazione...", suffix: "serve per entrare correttamente in autostrada", correct: true },
-                    { root: "L'intersezione a raso...", suffix: "è un'intersezione di due o più strade poste allo stesso livello", correct: true },
-                    { root: "L'intersezione a livelli sfalsati...", suffix: "facilita la circolazione, perché esclude l'incrocio diretto fra i veicoli", correct: true }
+                id: "L2", title: "Doveri del Conducente",
+                items: [
+                    { root: "È vietato...", text: "...spostare o imbrattare la segnaletica stradale", isTrue: true, topic: "Divieti" },
+                    { root: "È vietato...", text: "...lanciare dal finestrino mozziconi di sigaretta accesi", isTrue: true, topic: "Divieti" },
+                    { root: "Il conducente può...", text: "...lanciare oggetti dal finestrino sulla banchina", isTrue: false, topic: "Divieti" },
+                    { root: "Entrando in un centro abitato...", text: "...bisogna tenere conto che può cambiare spesso la precedenza", isTrue: true, topic: "Convivenza" },
+                    { root: "Un incidente...", text: "...anche a bassa velocità, può creare gravi problemi fisici", isTrue: true, topic: "Convivenza" }
                 ]
             },
             {
-                id: "segnali_1",
-                title: "Segnali: Dossi & Deformata",
-                icon: "⚠️",
-                questions: [
-                    { img: "001 strada deformata.png", root: "Il segnale raffigurato (001)...", suffix: "preannuncia un tratto di strada deformata", correct: true },
-                    { img: "001 strada deformata.png", root: "Il segnale raffigurato (001)...", suffix: "preannuncia una serie di dossi", correct: false },
-                    { img: "001 strada deformata.png", root: "In presenza del segnale (001)...", suffix: "è necessario tenere saldamente il volante per controllare sbandamenti", correct: true },
-                    { img: "002 dosso.png", root: "Il segnale raffigurato (002)...", suffix: "preannuncia un dosso", correct: true },
-                    { img: "002 dosso.png", root: "Il segnale raffigurato (002)...", suffix: "preannuncia una cunetta", correct: false },
-                    { img: "002 dosso.png", root: "In presenza del segnale (002)...", suffix: "è vietata l'inversione di marcia", correct: true },
-                    { img: "003 cunetta.png", root: "Il segnale raffigurato (003)...", suffix: "preannuncia una cunetta", correct: true },
-                    { img: "003 cunetta.png", root: "Il segnale raffigurato (003)...", suffix: "si trova prima di un tratto in discesa seguito da uno in salita", correct: true }
+                id: "L3", title: "Veicoli",
+                items: [
+                    { root: "I ciclomotori...", text: "...possono avere due o tre ruote", isTrue: true, topic: "Ciclomotori" },
+                    { root: "I ciclomotori...", text: "...possono circolare alla velocità di 60 km/h", isTrue: false, topic: "Ciclomotori" },
+                    { root: "I motocicli...", text: "...hanno cilindrata superiore a 50 cm3", isTrue: true, topic: "Motocicli" },
+                    { root: "Le autovetture...", text: "...possono avere motore elettrico", isTrue: true, topic: "Autoveicoli" },
+                    { root: "Le autovetture...", text: "...sono soggette a revisione ogni 5 anni", isTrue: false, topic: "Autoveicoli" }
                 ]
             },
             {
-                id: "segnali_2",
-                title: "Segnali: Curve Pericolose",
-                icon: "↪️",
-                questions: [
-                    { img: "004 curva pericolosa a destra.png", root: "Il segnale raffigurato (004)...", suffix: "preannuncia una curva pericolosa a destra", correct: true },
-                    { img: "004 curva pericolosa a destra.png", root: "Il segnale raffigurato (004)...", suffix: "preannuncia un obbligo di svolta a destra", correct: false },
-                    { img: "005 curva pericolosa a sinistra.png", root: "Il segnale raffigurato (005)...", suffix: "richiede di moderare la velocità", correct: true },
-                    { img: "006 doppia curva pericolosa la prima a destra.png", root: "Il segnale raffigurato (006)...", suffix: "preannuncia una doppia curva pericolosa, la prima a destra", correct: true },
-                    { img: "007 doppia curva pericolosa la prima a sinistra.png", root: "Il segnale raffigurato (007)...", suffix: "preannuncia, di norma a 150 metri, una doppia curva pericolosa", correct: true },
-                    { img: "007 doppia curva pericolosa la prima a sinistra.png", root: "In presenza del segnale (007)...", suffix: "è necessario percorrere le curve con più attenzione in caso di pioggia", correct: true },
-                    { img: "007 doppia curva pericolosa la prima a sinistra.png", root: "In presenza del segnale (007)...", suffix: "è consentito il sorpasso se la carreggiata è a due corsie e a doppio senso", correct: false }
-                ]
-            },
-            {
-                id: "utenti",
-                title: "Utenti Vulnerabili",
-                icon: "🚸",
-                questions: [
-                    { root: "Bisogna usare maggiore prudenza...", suffix: "nei confronti delle persone anziane", correct: true },
-                    { root: "Quando le persone anziane attraversano...", suffix: "bisogna suonare il clacson per farle attraversare rapidamente", correct: false },
-                    { root: "Il conducente deve...", suffix: "fermarsi quando un pedone non vedente col bastone bianco attraversa", correct: true },
-                    { root: "In vicinanza di un attraversamento pedonale...", suffix: "i bambini potrebbero tornare indietro improvvisamente", correct: true }
+                id: "L4", title: "Segnali di Pericolo",
+                items: [
+                    // Segnali con Immagini (Codici SVG mappati sotto)
+                    { root: "Il segnale raffigurato preannuncia...", text: "...un tratto di strada deformata", isTrue: true, img: "001", topic: "Strada Deformata" },
+                    { root: "Il segnale raffigurato preannuncia...", text: "...più curve consecutive", isTrue: false, img: "001", topic: "Strada Deformata" },
+                    { root: "Il segnale raffigurato preannuncia...", text: "...un dosso", isTrue: true, img: "002", topic: "Dosso" },
+                    { root: "Il segnale raffigurato preannuncia...", text: "...una galleria", isTrue: false, img: "002", topic: "Dosso" },
+                    { root: "Il segnale raffigurato preannuncia...", text: "...una cunetta", isTrue: true, img: "003", topic: "Cunetta" },
+                    { root: "Il segnale raffigurato preannuncia...", text: "...una curva pericolosa a destra", isTrue: true, img: "004", topic: "Curva Dx" },
+                    { root: "Il segnale raffigurato preannuncia...", text: "...una curva a sinistra", isTrue: false, img: "004", topic: "Curva Dx" },
+                    { root: "Il segnale raffigurato preannuncia...", text: "...una curva pericolosa a sinistra", isTrue: true, img: "005", topic: "Curva Sx" },
+                    { root: "Il segnale raffigurato preannuncia...", text: "...una doppia curva, la prima a destra", isTrue: true, img: "006", topic: "Doppia Curva" },
+                    { root: "Il segnale raffigurato preannuncia...", text: "...una doppia curva, la prima a sinistra", isTrue: true, img: "007", topic: "Doppia Curva" }
                 ]
             }
         ];
 
-        // --- STATE ---
-        let selectedTopics = new Set();
-        let groupedQuiz = [];
-        let currentGroupIndex = 0;
-        let scoreXP = 0;
-        let combo = 0;
-        let correctAnswersTotal = 0;
-        let questionsAttemptedTotal = 0;
+        // --- 2. MOTORE SVG (DISEGNA I SEGNALI) ---
+        const SVG_FACTORY = {
+            base: (content) => `<svg viewBox="0 0 100 100" class="sign-svg"><path d="M50 5 L95 90 L5 90 Z" fill="white" stroke="#cc0000" stroke-width="8" stroke-linejoin="round"/>${content}</svg>`,
+            
+            '001': '<path d="M25 70 Q35 50 50 70 Q65 50 75 70" fill="none" stroke="black" stroke-width="6" stroke-linecap="round" />', // Deformata
+            '002': '<path d="M25 70 Q50 30 75 70" fill="none" stroke="black" stroke-width="8" stroke-linecap="round" />', // Dosso
+            '003': '<path d="M25 50 Q50 90 75 50" fill="none" stroke="black" stroke-width="8" stroke-linecap="round" />', // Cunetta
+            '004': '<path d="M45 75 V50 Q45 35 70 40 L65 30 L80 45 L65 60 L70 50 Q55 45 55 75" fill="black" />', // Curva Dx
+            '005': '<path d="M55 75 V50 Q55 35 30 40 L35 30 L20 45 L35 60 L30 50 Q45 45 45 75" fill="black" />', // Curva Sx
+            '006': '<path d="M35 75 V60 Q35 45 50 45 Q65 45 65 35 L55 35 L70 20 L85 35 L75 35 Q75 55 50 55 Q45 55 45 75" fill="black" />', // Doppia Dx
+            '007': '<path d="M65 75 V60 Q65 45 50 45 Q35 45 35 35 L45 35 L30 20 L15 35 L25 35 Q25 55 50 55 Q55 55 55 75" fill="black" />' // Doppia Sx
+        };
 
-        // --- DOM ELEMENTS ---
-        const homeView = document.getElementById('home-view');
-        const quizView = document.getElementById('quiz-view');
-        const resultsView = document.getElementById('results-view');
-        const topicsList = document.getElementById('topics-list');
-        const startBtn = document.getElementById('start-btn');
-        const backBtn = document.getElementById('back-btn');
-        const statsPill = document.getElementById('stats-pill');
-        const selCountNum = document.getElementById('sel-count-num');
-        const selectedIndicator = document.getElementById('selected-indicator');
-        
-        // Quiz
-        const qRoot = document.getElementById('q-root');
-        const optionsContainer = document.getElementById('options-container');
-        const qImageBox = document.getElementById('q-image-box');
-        const qImage = document.getElementById('q-image');
-        const progressBar = document.getElementById('progress-bar');
-        const confirmBtn = document.getElementById('confirm-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const comboDisplay = document.getElementById('combo-display');
-        const comboCount = document.getElementById('combo-count');
-        const currentScoreSpan = document.getElementById('current-score');
-        const modal = document.getElementById('exit-modal');
-        const modalBox = document.getElementById('modal-box');
+        // --- 3. LOGICA APPLICAZIONE ---
+        const app = {
+            queue: [],
+            currentIdx: 0,
+            streak: 0,
+            isBusy: false,
 
-        // --- INIT ---
-        function init() {
-            renderTopics();
-        }
-
-        function renderTopics() {
-            topicsList.innerHTML = '';
-            rawDatabase.forEach((topic, index) => {
-                const el = document.createElement('div');
-                el.className = 'group p-4 rounded-2xl border border-zinc-800 bg-[#18181b] flex items-center justify-between cursor-pointer transition-all active:scale-[0.98] hover:border-zinc-600';
-                el.onclick = () => toggleTopic(index, el);
+            init: function() {
+                this.renderMenu();
+                this.goMix(); // Parte subito in Mix Mode
                 
-                el.innerHTML = `
-                    <div class="flex items-center space-x-4 pointer-events-none">
-                        <div class="text-2xl bg-zinc-800 w-12 h-12 flex items-center justify-center rounded-xl group-hover:scale-110 transition-transform">
-                            ${topic.icon}
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white text-base leading-none mb-1">${topic.title}</h3>
-                            <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">${topic.questions.length} CARDS</p>
-                        </div>
-                    </div>
-                    <div class="check-circle w-6 h-6 rounded-full border-2 border-zinc-700 flex items-center justify-center transition-all">
-                        <div class="w-3 h-3 bg-[var(--neon-green)] rounded-full opacity-0 transition-opacity"></div>
-                    </div>
-                `;
-                topicsList.appendChild(el);
-            });
-        }
+                // Event Listeners sicuri
+                document.getElementById('btn-true').onclick = () => this.handleAnswer(true);
+                document.getElementById('btn-false').onclick = () => this.handleAnswer(false);
+                document.getElementById('btn-start-custom').onclick = () => this.startCustom();
+            },
 
-        function toggleTopic(index, element) {
-            const checkCircle = element.querySelector('.check-circle');
-            const dot = checkCircle.querySelector('div');
+            // Prepara la coda di domande
+            buildQueue: function(mode, lessonId = null) {
+                this.queue = [];
+                this.currentIdx = 0;
+                this.streak = 0;
+                this.updateStreak();
 
-            if (selectedTopics.has(index)) {
-                selectedTopics.delete(index);
-                element.classList.remove('border-[var(--neon-green)]');
-                element.classList.remove('bg-zinc-900');
-                checkCircle.classList.remove('border-[var(--neon-green)]');
-                dot.classList.add('opacity-0');
-            } else {
-                selectedTopics.add(index);
-                element.classList.add('border-[var(--neon-green)]');
-                element.classList.add('bg-zinc-900');
-                checkCircle.classList.add('border-[var(--neon-green)]');
-                dot.classList.remove('opacity-0');
-            }
-            
-            const count = selectedTopics.size;
-            selCountNum.innerText = count;
-            
-            if(count > 0) {
-                selectedIndicator.classList.remove('opacity-0');
-                startBtn.disabled = false;
-                startBtn.innerHTML = `AVVIA SESSIONE (${count}) 🚀`;
-            } else {
-                selectedIndicator.classList.add('opacity-0');
-                startBtn.disabled = true;
-                startBtn.innerHTML = `SELEZIONA ARGOMENTI`;
-            }
-        }
-
-        // --- GAME LOGIC ---
-
-        function startQuiz() {
-            // Build Pool
-            let pool = [];
-            selectedTopics.forEach(index => {
-                pool = pool.concat(rawDatabase[index].questions);
-            });
-
-            // Grouping Logic
-            const groupsMap = {};
-            pool.forEach(q => {
-                const key = q.root + (q.img || '');
-                if (!groupsMap[key]) {
-                    groupsMap[key] = {
-                        root: q.root,
-                        img: q.img || null,
-                        options: []
-                    };
+                if (mode === 'mix') {
+                    DB.forEach(lesson => this.queue.push(...lesson.items));
+                    this.queue.sort(() => Math.random() - 0.5); // Shuffle
+                    document.getElementById('mode-badge').innerText = "MIX MODE";
+                } else if (mode === 'custom') {
+                    const checkboxes = document.querySelectorAll('.topic-check:checked');
+                    checkboxes.forEach(cb => {
+                        const lesson = DB.find(l => l.id === cb.value);
+                        if(lesson) this.queue.push(...lesson.items);
+                    });
+                    document.getElementById('mode-badge').innerText = "STUDIO MODE";
                 }
-                groupsMap[key].options.push({
-                    text: q.suffix,
-                    correct: q.correct,
-                    id: Math.random().toString(36).substr(2, 9)
-                });
-            });
 
-            groupedQuiz = Object.values(groupsMap).sort(() => Math.random() - 0.5);
-            groupedQuiz.forEach(g => g.options.sort(() => Math.random() - 0.5));
-
-            // Reset Game State
-            currentGroupIndex = 0;
-            scoreXP = 0;
-            combo = 0;
-            correctAnswersTotal = 0;
-            
-            // Calculate total true statements for accuracy tracking
-            let totalTrue = 0;
-            groupedQuiz.forEach(g => g.options.forEach(o => { if(o.correct) totalTrue++ }));
-            questionsAttemptedTotal = totalTrue; // Simplified metric
-
-            // UI Switch
-            homeView.classList.add('hidden');
-            resultsView.classList.add('hidden');
-            quizView.classList.remove('hidden');
-            backBtn.classList.remove('hidden');
-            statsPill.classList.remove('hidden');
-            updateStatsUI();
-
-            renderCard();
-        }
-
-        function renderCard() {
-            const group = groupedQuiz[currentGroupIndex];
-            
-            // Reset Buttons
-            confirmBtn.classList.remove('hidden');
-            nextBtn.classList.add('hidden');
-            optionsContainer.innerHTML = '';
-            
-            // Text & Focus Processing
-            qRoot.innerText = group.root;
-
-            // Image
-            if (group.img) {
-                qImageBox.classList.remove('hidden');
-                qImage.src = group.img;
-                qImage.onerror = () => qImageBox.classList.add('hidden');
-            } else {
-                qImageBox.classList.add('hidden');
-            }
-
-            // Generate Options
-            group.options.forEach((opt) => {
-                const btn = document.createElement('div');
-                btn.className = 'option-card relative p-4 rounded-xl cursor-pointer flex items-start gap-4';
-                btn.onclick = () => toggleSelection(btn);
+                if (this.queue.length === 0) {
+                    alert("Seleziona almeno una lezione!");
+                    return false;
+                }
                 
-                // Highlight important words in text
-                const formattedText = processTextForFocus(opt.text);
+                this.renderCard();
+                return true;
+            },
 
-                btn.innerHTML = `
-                    <div class="mt-0.5 w-5 h-5 rounded-md border-2 border-zinc-600 flex-shrink-0 flex items-center justify-center transition-colors chk-box">
-                        <svg class="w-3 h-3 text-black opacity-0 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                    <span class="text-base text-zinc-300 leading-snug font-medium select-none pointer-events-none">${formattedText}</span>
-                `;
-                optionsContainer.appendChild(btn);
-            });
+            renderCard: function() {
+                if (this.currentIdx >= this.queue.length) {
+                    this.showEndScreen();
+                    return;
+                }
 
-            // Update Progress Bar
-            const prog = (currentGroupIndex / groupedQuiz.length) * 100;
-            progressBar.style.width = `${prog}%`;
-        }
+                const item = this.queue[this.currentIdx];
+                const cardComp = document.getElementById('txt-comp');
+                const cardRoot = document.getElementById('txt-root');
+                const imgContainer = document.getElementById('sign-container');
 
-        function toggleSelection(btn) {
-            if (!nextBtn.classList.contains('hidden')) return; // locked
-
-            btn.classList.toggle('selected');
-            const icon = btn.querySelector('svg');
-            const chk = btn.querySelector('.chk-box');
-            
-            if (btn.classList.contains('selected')) {
-                icon.classList.remove('opacity-0');
-                chk.classList.add('bg-[var(--neon-green)]', 'border-[var(--neon-green)]');
-                chk.classList.remove('border-zinc-600');
-            } else {
-                icon.classList.add('opacity-0');
-                chk.classList.remove('bg-[var(--neon-green)]', 'border-[var(--neon-green)]');
-                chk.classList.add('border-zinc-600');
-            }
-        }
-
-        function checkAnswers() {
-            const group = groupedQuiz[currentGroupIndex];
-            const domOptions = document.querySelectorAll('.option-card');
-            
-            let cardPerfect = true;
-            let cardHasError = false;
-
-            domOptions.forEach((btn, index) => {
-                const data = group.options[index];
-                const isSelected = btn.classList.contains('selected');
-                
-                // Reveal logic
-                if (data.correct) {
-                    if (isSelected) {
-                        btn.classList.add('correct-reveal');
-                        correctAnswersTotal++;
-                    } else {
-                        btn.classList.add('missed-reveal');
-                        cardPerfect = false;
-                        cardHasError = true;
-                    }
+                // Gestione Immagine
+                if (item.img && SVG_FACTORY[item.img]) {
+                    imgContainer.innerHTML = SVG_FACTORY.base(SVG_FACTORY[item.img]);
+                    imgContainer.classList.remove('hidden');
                 } else {
-                    if (isSelected) {
-                        btn.classList.add('wrong-reveal');
-                        cardPerfect = false;
-                        cardHasError = true;
-                    }
+                    imgContainer.classList.add('hidden');
                 }
-                btn.onclick = null; // Lock
-            });
 
-            // Combo & Score Logic
-            if (cardPerfect) {
-                combo++;
-                // Score Calculation: Base 100 + (Combo * 50)
-                const points = 100 + (combo * 20);
-                scoreXP += points;
-                triggerPulse(statsPill);
-            } else {
-                combo = 0;
-                if(cardHasError) {
-                    triggerShake(quizView);
-                    // Minimal points for effort
-                    scoreXP += 10;
+                // Testi
+                cardRoot.innerText = item.root;
+                cardComp.innerText = item.text;
+                document.getElementById('topic-label').innerText = item.topic;
+
+                // Animazione entrata
+                cardComp.classList.remove('anim-enter');
+                void cardComp.offsetWidth; // Trigger reflow
+                cardComp.classList.add('anim-enter');
+
+                // Progress Bar
+                const pct = (this.currentIdx / this.queue.length) * 100;
+                document.getElementById('progress-fill').style.width = `${pct}%`;
+            },
+
+            handleAnswer: function(userChoice) {
+                if (this.isBusy || this.currentIdx >= this.queue.length) return;
+                this.isBusy = true;
+
+                const item = this.queue[this.currentIdx];
+                const isCorrect = userChoice === item.isTrue;
+                
+                const layer = document.getElementById('feedback-layer');
+                const icon = document.getElementById('fb-icon');
+                const text = document.getElementById('fb-text');
+                const wrapper = document.getElementById('card-wrapper');
+
+                layer.classList.remove('hidden', 'bg-green-600/90', 'bg-red-600/90');
+                layer.classList.add('flex');
+
+                if (isCorrect) {
+                    this.streak++;
+                    confetti({ particleCount: 30, spread: 60, origin: { y: 0.7 } });
+                    layer.classList.add('bg-green-600/90');
+                    icon.className = "ph-fill ph-check-circle";
+                    text.innerText = "ESATTO";
+                } else {
+                    this.streak = 0;
+                    wrapper.classList.add('anim-shake');
+                    layer.classList.add('bg-red-600/90');
+                    icon.className = "ph-fill ph-x-circle";
+                    text.innerText = "ERRATO";
+                    setTimeout(() => wrapper.classList.remove('anim-shake'), 400);
                 }
+
+                this.updateStreak();
+
+                // Wait & Next
+                setTimeout(() => {
+                    layer.classList.add('hidden');
+                    layer.classList.remove('flex');
+                    this.currentIdx++;
+                    this.renderCard();
+                    this.isBusy = false;
+                }, 800);
+            },
+
+            updateStreak: function() {
+                document.getElementById('streak-counter').innerText = this.streak;
+            },
+
+            showEndScreen: function() {
+                document.getElementById('txt-root').innerText = "Sessione Terminata";
+                document.getElementById('txt-comp').innerText = "Ottimo Lavoro! 🎉";
+                document.getElementById('sign-container').classList.add('hidden');
+                confetti({ particleCount: 150, spread: 100 });
+            },
+
+            // --- NAVIGAZIONE ---
+            goMix: function() {
+                document.getElementById('screen-menu').style.transform = "translateY(100%)";
+                this.buildQueue('mix');
+            },
+
+            toggleMenu: function() {
+                const menu = document.getElementById('screen-menu');
+                const isOpen = menu.style.transform === "translateY(0%)";
+                menu.style.transform = isOpen ? "translateY(100%)" : "translateY(0%)";
+            },
+
+            startCustom: function() {
+                if(this.buildQueue('custom')) {
+                    this.toggleMenu();
+                }
+            },
+
+            renderMenu: function() {
+                const list = document.getElementById('list-container');
+                list.innerHTML = '';
+                DB.forEach(l => {
+                    list.innerHTML += `
+                        <label class="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 active:bg-white/10 transition-colors">
+                            <input type="checkbox" value="${l.id}" class="topic-check w-5 h-5 accent-purple-500 rounded" checked>
+                            <span class="text-sm font-bold text-gray-200">${l.title}</span>
+                        </label>
+                    `;
+                });
             }
+        };
 
-            updateStatsUI();
+        // Avvio App
+        window.onload = () => app.init();
 
-            // Swap Buttons
-            confirmBtn.classList.add('hidden');
-            nextBtn.classList.remove('hidden');
-            
-            // Auto Scroll to bottom to see button
-            quizView.scrollTo({ top: quizView.scrollHeight, behavior: 'smooth' });
-        }
-
-        function nextCard() {
-            currentGroupIndex++;
-            if (currentGroupIndex < groupedQuiz.length) {
-                renderCard();
-                quizView.scrollTo({ top: 0, behavior: 'smooth' });
-            } else {
-                showResults();
-            }
-        }
-
-        function updateStatsUI() {
-            currentScoreSpan.innerText = scoreXP;
-            comboCount.innerText = combo;
-            
-            if (combo > 1) {
-                comboDisplay.classList.remove('hidden');
-            } else {
-                comboDisplay.classList.add('hidden');
-            }
-        }
-
-        function triggerShake(element) {
-            element.classList.add('anim-shake');
-            if (navigator.vibrate) navigator.vibrate(200);
-            setTimeout(() => element.classList.remove('anim-shake'), 300);
-        }
-        
-        function triggerPulse(element) {
-            element.classList.add('scale-110');
-            setTimeout(() => element.classList.remove('scale-110'), 200);
-        }
-
-        // --- RESULTS & CONFETTI ---
-
-        function showResults() {
-            quizView.classList.add('hidden');
-            resultsView.classList.remove('hidden');
-            backBtn.classList.add('hidden');
-            statsPill.classList.add('hidden');
-
-            // Calculate "Accuracy"
-            // Simple logic: (Score / Max Potential Score) roughly
-            // Better logic: CorrectAnswersTotal / TotalTrueAnswersAvailable
-            
-            let totalTrueAvailable = 0;
-            groupedQuiz.forEach(g => g.options.forEach(o => { if(o.correct) totalTrueAvailable++ }));
-            
-            let percentage = 0;
-            if(totalTrueAvailable > 0) {
-                percentage = Math.round((correctAnswersTotal / totalTrueAvailable) * 100);
-            }
-
-            document.getElementById('final-score-val').innerText = percentage + "%";
-            
-            const ring = document.getElementById('score-ring');
-            const circumference = 264;
-            const offset = circumference - (percentage / 100) * circumference;
-            setTimeout(() => { ring.style.strokeDashoffset = offset; }, 100);
-
-            const title = document.getElementById('result-title');
-            const msg = document.getElementById('result-msg');
-
-            if (percentage >= 90) {
-                title.innerText = "GOD MODE 🏆";
-                title.className = "text-4xl font-black mb-3 text-[var(--neon-green)] italic";
-                msg.innerText = `XP Totali: ${scoreXP}. Il tuo focus è impressionante.`;
-                fireConfetti();
-            } else if (percentage >= 70) {
-                title.innerText = "SOLID RUN 🔥";
-                title.className = "text-4xl font-black mb-3 text-white italic";
-                msg.innerText = `XP Totali: ${scoreXP}. Molto bene, ma attenzione ai dettagli.`;
-            } else {
-                title.innerText = "RIPASSA 💀";
-                title.className = "text-4xl font-black mb-3 text-[var(--wrong)] italic";
-                msg.innerText = `XP Totali: ${scoreXP}. L'occhio non era abbastanza veloce. Riprova.`;
-            }
-        }
-
-        function fireConfetti() {
-            const container = document.getElementById('confetti-container');
-            const colors = ['#ccff00', '#00f0ff', '#d946ef', '#ffffff'];
-            
-            for (let i = 0; i < 50; i++) {
-                const conf = document.createElement('div');
-                conf.className = 'confetti';
-                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                conf.style.left = Math.random() * 100 + 'vw';
-                conf.style.animationDuration = (Math.random() * 2 + 2) + 's';
-                conf.style.opacity = Math.random();
-                container.appendChild(conf);
-            }
-            
-            setTimeout(() => { container.innerHTML = ''; }, 5000);
-        }
-
-        // --- NAVIGATION MODALS ---
-
-        function confirmExit() {
-            modal.classList.remove('hidden');
-            // Slight delay to allow transition
-            requestAnimationFrame(() => {
-                modal.classList.remove('opacity-0');
-                modalBox.classList.remove('scale-95');
-                modalBox.classList.add('scale-100');
-            });
-        }
-
-        function closeModal() {
-            modal.classList.add('opacity-0');
-            modalBox.classList.remove('scale-100');
-            modalBox.classList.add('scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 300);
-        }
-
-        function goHome() {
-            closeModal();
-            setTimeout(() => {
-                quizView.classList.add('hidden');
-                resultsView.classList.add('hidden');
-                homeView.classList.remove('hidden');
-                backBtn.classList.add('hidden');
-                statsPill.classList.add('hidden');
-            }, 300);
-        }
-
-        // Run
-        init();
     </script>
 </body>
 </html>
